@@ -9,7 +9,7 @@ def run(*command):
         check=True, capture_output=True, text=True).stdout.strip()
 checks = {
     "ledger": "SELECT (SELECT count(*) FROM accounts),(SELECT coalesce(sum(balance_minor),0) FROM accounts),(SELECT count(*) FROM account_events),(SELECT count(*) FROM transfers),(SELECT max(version) FROM schema_migrations)",
-    "audit": "SELECT count(*) FROM inbox",
+    "audit": "SELECT (SELECT count(*) FROM inbox),(SELECT count(*) FROM dead_letters),(SELECT count(*) FROM dead_letters WHERE published_at IS NULL),(SELECT max(version) FROM schema_migrations)",
 }
 for source in ("ledger_csharp", "ledger_java", "audit_csharp", "audit_java"):
     temporary = "restore_verify_" + uuid.uuid4().hex

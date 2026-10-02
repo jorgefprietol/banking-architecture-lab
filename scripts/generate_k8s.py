@@ -37,11 +37,12 @@ for name, image, role, database, uid in [
         config["LEDGER_JDBC_URL" if role == "ledger" else "AUDIT_JDBC_URL"] = f"jdbc:postgresql://host.docker.internal:15433/{database}"
         secret_ref = {"name": "DB_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "banking-local", "key": "password"}}}
     if role == "ledger":
+        config.update(OUTBOX_MAX_AGE_SECONDS="60")
         config.update(OIDC_ISSUER="http://localhost:18180/realms/banking-lab",
             OIDC_JWKS="http://host.docker.internal:18180/realms/banking-lab/protocol/openid-connect/certs",
             OIDC_METADATA="http://host.docker.internal:18180/realms/banking-lab/.well-known/openid-configuration")
     else:
-        config.update(KAFKA_GROUP=name + "-v1", BANK_MODE="audit")
+        config.update(KAFKA_GROUP=name + "-v1", BANK_MODE="audit", KAFKA_DLQ_TOPIC="transfers." + ("csharp" if "csharp" in name else "java") + ".dlq.v1")
     container = {
         "name": name, "image": image, "imagePullPolicy": "Never",
         "env": [{"name": key, "value": value} for key, value in sorted(config.items())] + [secret_ref],

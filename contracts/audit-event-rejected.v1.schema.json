@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:banking-lab:audit-event-rejected:v1",
+  "title": "AuditEventRejected v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "type", "failureId", "sourceTopic", "sourcePartition", "sourceOffset", "originalKey", "rawPayload", "errorCode", "rejectedAt"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "type": {"const": "AuditEventRejected"},
+    "failureId": {"type": "string", "format": "uuid"},
+    "sourceTopic": {"type": "string", "minLength": 1},
+    "sourcePartition": {"type": "integer", "minimum": 0},
+    "sourceOffset": {"type": "integer", "minimum": 0},
+    "originalKey": {"type": ["string", "null"]},
+    "rawPayload": {"type": ["string", "null"]},
+    "errorCode": {"type": "string", "minLength": 1},
+    "rejectedAt": {"type": "string", "format": "date-time"}
+  }
+}

@@ -56,6 +56,8 @@ builder.Logging.AddJsonConsole();
 builder.Services.AddOpenTelemetry().ConfigureResource(r => r.AddService("ledger-csharp"))
     .WithTracing(t => t.AddAspNetCoreInstrumentation().AddOtlpExporter());
 builder.Services.AddHostedService<OutboxRelay>();
+builder.Services.AddSingleton<IOutboxStatus, PostgresOutboxStatus>();
+builder.Services.AddHostedService<OutboxMonitor>();
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -91,6 +93,7 @@ app.MapGet("/health/ready", async (NpgsqlDataSource db, CancellationToken ct) =>
 });
 app.MapPost("/api/accounts", async (CreateAccount request, ILedger ledger, CancellationToken ct) =>
     Results.Json(await ledger.Open(request, ct), statusCode: 201)).RequireAuthorization("admin");
+app.MapGet("/api/operations/outbox", async (IOutboxStatus status, CancellationToken ct) => await status.Read(ct)).RequireAuthorization("admin");
 app.MapGet("/api/accounts/{id:guid}", async (Guid id, ILedger ledger, ClaimsPrincipal user, CancellationToken ct) =>
     await ledger.Read(id, user.FindFirstValue("sub")!, HasRole(user, "admin"), ct)).RequireAuthorization("reader");
 app.MapGet("/api/accounts/{id:guid}/events", async (Guid id, ILedger ledger, ClaimsPrincipal user, CancellationToken ct) =>

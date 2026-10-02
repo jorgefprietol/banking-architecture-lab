@@ -70,6 +70,51 @@
         }
       }
     },
+    "/api/operations/outbox": {
+      "get": {
+        "operationId": "outboxStatus",
+        "description": "Required realm role: admin",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboxStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        }
+      }
+    },
     "/api/accounts/{id}": {
       "get": {
         "operationId": "readAccount",
@@ -682,6 +727,34 @@
   },
   "components": {
     "schemas": {
+      "OutboxStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pending",
+          "oldestAgeSeconds",
+          "thresholdSeconds",
+          "alert"
+        ],
+        "properties": {
+          "pending": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "oldestAgeSeconds": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "thresholdSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 86400
+          },
+          "alert": {
+            "type": "boolean"
+          }
+        }
+      },
       "CreateAccount": {
         "type": "object",
         "additionalProperties": false,

@@ -41,6 +41,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
             .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
             .requestMatchers("/health/**").permitAll()
+            .requestMatchers("/api/operations/**").hasRole("admin")
             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/accounts", "/api/products", "/api/reconciliation").hasRole("admin")
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/accounts/**", "/api/products/**").hasRole("reader")
             .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/products/**").hasRole("writer")

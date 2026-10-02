@@ -13,7 +13,7 @@ def describe():
     output = run("docker", "compose", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
         "--bootstrap-server", "localhost:29092", "--describe")
     identities = dict(re.findall(r"Topic: (\S+)\s+TopicId: (\S+)", output))
-    assert all(topic in identities for topic in ("transfers.csharp.v1", "transfers.java.v1", "__consumer_offsets")), output
+    assert all(topic in identities for topic in ("transfers.csharp.v1", "transfers.java.v1", "transfers.csharp.dlq.v1", "transfers.java.dlq.v1", "__consumer_offsets")), output
     return identities
 
 def offsets():
@@ -24,7 +24,7 @@ def offsets():
 
 before = describe()
 before_offsets = offsets()
-assert len(before_offsets) == 6, before_offsets
+assert len(before_offsets) == 12, before_offsets
 run("docker", "compose", "up", "-d", "--no-deps", "--force-recreate", "kafka")
 deadline = time.monotonic() + 300
 while time.monotonic() < deadline:
@@ -38,4 +38,4 @@ after = describe()
 assert before == after, (before, after)
 after_offsets = offsets()
 assert all(after_offsets.get(key, -1) >= value for key, value in before_offsets.items()), (before_offsets, after_offsets)
-print("Broker recreated: topic identities and record offsets persisted across all six application partitions.")
+print("Broker recreated: topic identities and record offsets persisted across all twelve application partitions, including DLQs.")
