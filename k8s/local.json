@@ -1,0 +1,616 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "banking-lab",
+        "labels": {
+          "pod-security.kubernetes.io/enforce": "restricted"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "ledger-csharp",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "selector": {
+          "app": "ledger-csharp"
+        },
+        "ports": [
+          {
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "ledger-csharp",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "ledger-csharp"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "ledger-csharp"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 30,
+            "containers": [
+              {
+                "name": "ledger-csharp",
+                "image": "banking-ledger-csharp:local",
+                "imagePullPolicy": "Never",
+                "env": [
+                  {
+                    "name": "ASPNETCORE_ENVIRONMENT",
+                    "value": "Development"
+                  },
+                  {
+                    "name": "ASPNETCORE_URLS",
+                    "value": "http://+:8080"
+                  },
+                  {
+                    "name": "KAFKA_BOOTSTRAP",
+                    "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_TOPIC",
+                    "value": "transfers.csharp.v1"
+                  },
+                  {
+                    "name": "OIDC_ISSUER",
+                    "value": "http://localhost:18180/realms/banking-lab"
+                  },
+                  {
+                    "name": "OIDC_JWKS",
+                    "value": "http://host.docker.internal:18180/realms/banking-lab/protocol/openid-connect/certs"
+                  },
+                  {
+                    "name": "OIDC_METADATA",
+                    "value": "http://host.docker.internal:18180/realms/banking-lab/.well-known/openid-configuration"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                    "value": "http://host.docker.internal:19417"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                    "value": "grpc"
+                  },
+                  {
+                    "name": "OTEL_LOGS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_METRICS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_SERVICE_NAME",
+                    "value": "ledger-csharp"
+                  },
+                  {
+                    "name": "DB_CONNECTION",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "banking-local",
+                        "key": "ledger_csharp"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "runAsNonRoot": true,
+                  "runAsUser": 1654,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                },
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "path": "/health/live",
+                    "port": 8080
+                  },
+                  "periodSeconds": 3,
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 120
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health/live",
+                    "port": 8080
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 6
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health/ready",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "audit-csharp",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "audit-csharp"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "audit-csharp"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 30,
+            "containers": [
+              {
+                "name": "audit-csharp",
+                "image": "banking-audit-csharp:local",
+                "imagePullPolicy": "Never",
+                "env": [
+                  {
+                    "name": "ASPNETCORE_ENVIRONMENT",
+                    "value": "Development"
+                  },
+                  {
+                    "name": "ASPNETCORE_URLS",
+                    "value": "http://+:8080"
+                  },
+                  {
+                    "name": "BANK_MODE",
+                    "value": "audit"
+                  },
+                  {
+                    "name": "KAFKA_BOOTSTRAP",
+                    "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_GROUP",
+                    "value": "audit-csharp-v1"
+                  },
+                  {
+                    "name": "KAFKA_TOPIC",
+                    "value": "transfers.csharp.v1"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                    "value": "http://host.docker.internal:19417"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                    "value": "grpc"
+                  },
+                  {
+                    "name": "OTEL_LOGS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_METRICS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_SERVICE_NAME",
+                    "value": "audit-csharp"
+                  },
+                  {
+                    "name": "DB_CONNECTION",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "banking-local",
+                        "key": "audit_csharp"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "runAsNonRoot": true,
+                  "runAsUser": 1654,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "ledger-java",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "selector": {
+          "app": "ledger-java"
+        },
+        "ports": [
+          {
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "ledger-java",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "ledger-java"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "ledger-java"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 30,
+            "containers": [
+              {
+                "name": "ledger-java",
+                "image": "banking-java:local",
+                "imagePullPolicy": "Never",
+                "env": [
+                  {
+                    "name": "DB_USER",
+                    "value": "ledger_java"
+                  },
+                  {
+                    "name": "KAFKA_BOOTSTRAP",
+                    "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_TOPIC",
+                    "value": "transfers.java.v1"
+                  },
+                  {
+                    "name": "LEDGER_JDBC_URL",
+                    "value": "jdbc:postgresql://host.docker.internal:15433/ledger_java"
+                  },
+                  {
+                    "name": "OIDC_ISSUER",
+                    "value": "http://localhost:18180/realms/banking-lab"
+                  },
+                  {
+                    "name": "OIDC_JWKS",
+                    "value": "http://host.docker.internal:18180/realms/banking-lab/protocol/openid-connect/certs"
+                  },
+                  {
+                    "name": "OIDC_METADATA",
+                    "value": "http://host.docker.internal:18180/realms/banking-lab/.well-known/openid-configuration"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                    "value": "http://host.docker.internal:19417"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                    "value": "grpc"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_JDBC_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_KAFKA_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_TOMCAT_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_LOGS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_METRICS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_SERVICE_NAME",
+                    "value": "ledger-java"
+                  },
+                  {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "banking-local",
+                        "key": "password"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "runAsNonRoot": true,
+                  "runAsUser": 100,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                },
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "path": "/health/live",
+                    "port": 8080
+                  },
+                  "periodSeconds": 3,
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 120
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health/live",
+                    "port": 8080
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 6
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health/ready",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "audit-java",
+        "namespace": "banking-lab"
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "audit-java"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "audit-java"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "terminationGracePeriodSeconds": 30,
+            "containers": [
+              {
+                "name": "audit-java",
+                "image": "banking-java:local",
+                "imagePullPolicy": "Never",
+                "env": [
+                  {
+                    "name": "AUDIT_JDBC_URL",
+                    "value": "jdbc:postgresql://host.docker.internal:15433/audit_java"
+                  },
+                  {
+                    "name": "BANK_MODE",
+                    "value": "audit"
+                  },
+                  {
+                    "name": "DB_USER",
+                    "value": "audit_java"
+                  },
+                  {
+                    "name": "KAFKA_BOOTSTRAP",
+                    "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_GROUP",
+                    "value": "audit-java-v1"
+                  },
+                  {
+                    "name": "KAFKA_TOPIC",
+                    "value": "transfers.java.v1"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                    "value": "http://host.docker.internal:19417"
+                  },
+                  {
+                    "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                    "value": "grpc"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_JDBC_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_KAFKA_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_INSTRUMENTATION_TOMCAT_ENABLED",
+                    "value": "true"
+                  },
+                  {
+                    "name": "OTEL_LOGS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_METRICS_EXPORTER",
+                    "value": "none"
+                  },
+                  {
+                    "name": "OTEL_SERVICE_NAME",
+                    "value": "audit-java"
+                  },
+                  {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "banking-local",
+                        "key": "password"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "768Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "runAsNonRoot": true,
+                  "runAsUser": 100,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
