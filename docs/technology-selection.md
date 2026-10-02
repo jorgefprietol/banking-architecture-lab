@@ -9,6 +9,8 @@ La muestra de ofertas describe señales de contratación; no mide cuota de merca
 | [Citi, Java Microservices Developer, 26990555, 18 septiembre 2026](https://jobs.citi.com/job/jersey-city/java-microservices-developer-vice-president/287/100801454416) | Spring Boot, Kafka, concurrencia y servicios cloud | API Java, outbox y consumidor independiente |
 | [Citi, .NET Full Stack, 26995360, 30 septiembre 2026](https://jobs.citi.com/job/chennai/net-full-stack-developer-assistant-vice-president/287/101350212608) | C#, .NET, Java, bases relacionales y CI/CD | Dos implementaciones, SQL explícito y pipeline reproducible |
 | [Citi, Java Developer, 26995779, 29 septiembre 2026](https://jobs.citi.com/job/pune/java-developer/287/101320614928) | Spring, Kafka, SQL, contenedores, observabilidad, pruebas | Pruebas de concurrencia, Docker, Kubernetes y telemetría |
+| [CodeRoad, Senior .NET Engineer, LATAM remoto](https://job-boards.greenhouse.io/coderoad/jobs/4377865009) | C#, APIs, microservicios; Docker, AKS y CI/CD como complementos | Núcleo C# probado, API y entrega automatizada |
+| [Endava, Senior Backend Engineer](https://jobs.smartrecruiters.com/Endava/744000131964923-senior-backend-engineer-java-kafka-cloud-) | Java, Spring Boot, Kafka, Docker, pruebas y equipos internacionales | Contratos compartidos y ejecución de escenarios transaccionales |
 
 Las ofertas internacionales incluyen roles presenciales o híbridos; no se presentan como oportunidades remotas abiertas desde Ecuador. La selección prioriza capacidades transferibles. Azure/AWS, Oracle/SQL Server y Jenkins/Tekton son frecuentes en entornos bancarios; no se instalan sistemas redundantes solo para acumular nombres.
 
