@@ -150,5 +150,172 @@
         "scanned_at": "2026-10-02T18:11:54.845990666Z"
       }
     }
+  },
+  "recovery_enhancement": {
+    "unit": {
+      "csharp": 58,
+      "java": 41,
+      "python": 6
+    },
+    "native_acceptance": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "targets": {
+        "csharp": "http://127.0.0.1:19081",
+        "java": "http://127.0.0.1:19082"
+      },
+      "latency_samples": [
+        {
+          "implementation": "csharp",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 78.5,
+          "p95_ms": 672.0
+        },
+        {
+          "implementation": "java",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 281.0,
+          "p95_ms": 2031.0
+        }
+      ],
+      "note": "Local contention sample, not a production capacity benchmark."
+    },
+    "recovery": {
+      "tests": 2,
+      "successful": true,
+      "languages": [
+        "csharp",
+        "java"
+      ],
+      "durationSeconds": 139.687
+    },
+    "native_load": {
+      "runId": "65c82c4d-36a4-4a59-905b-8b91aff88220",
+      "seed": 42,
+      "iterations": 80,
+      "pairs": 4,
+      "concurrency": 8,
+      "workloadSha256": "d233482a173ce5b88435609f1cba97482b48549baab298bb398861cc20f5283d",
+      "results": [
+        {
+          "language": "csharp",
+          "requests": 88,
+          "uniqueTransfers": 80,
+          "durationSeconds": 0.532,
+          "requestsPerSecond": 165.414,
+          "p50Ms": 32.0,
+          "p95Ms": 94.0,
+          "p99Ms": 172.0,
+          "balancesVerified": true,
+          "idempotencyVerified": true
+        },
+        {
+          "language": "java",
+          "requests": 88,
+          "uniqueTransfers": 80,
+          "durationSeconds": 0.516,
+          "requestsPerSecond": 170.543,
+          "p50Ms": 46.0,
+          "p95Ms": 78.0,
+          "p99Ms": 125.0,
+          "balancesVerified": true,
+          "idempotencyVerified": true
+        }
+      ]
+    },
+    "backup_restore_databases": 4,
+    "ledger_invariants": "no drift or unbalanced postings",
+    "compose_acceptance": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "targets": {
+        "csharp": "http://127.0.0.1:19081",
+        "java": "http://127.0.0.1:19082"
+      },
+      "latency_samples": [
+        {
+          "implementation": "csharp",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 92.99,
+          "p95_ms": 534.48
+        },
+        {
+          "implementation": "java",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 419.54,
+          "p95_ms": 1132.07
+        }
+      ],
+      "note": "Local contention sample, not a production capacity benchmark."
+    },
+    "compose_recovery": {
+      "tests": 2,
+      "successful": true,
+      "languages": [
+        "csharp",
+        "java"
+      ],
+      "durationSeconds": 112.75
+    },
+    "compose_load": {
+      "runId": "5206f10c-f268-460b-b8b9-6ab7afcb6e21",
+      "seed": 42,
+      "iterations": 80,
+      "pairs": 4,
+      "concurrency": 8,
+      "workloadSha256": "d233482a173ce5b88435609f1cba97482b48549baab298bb398861cc20f5283d",
+      "results": [
+        {
+          "language": "csharp",
+          "requests": 88,
+          "uniqueTransfers": 80,
+          "durationSeconds": 0.365,
+          "requestsPerSecond": 240.808,
+          "p50Ms": 27.672,
+          "p95Ms": 55.493,
+          "p99Ms": 59.095,
+          "balancesVerified": true,
+          "idempotencyVerified": true
+        },
+        {
+          "language": "java",
+          "requests": 88,
+          "uniqueTransfers": 80,
+          "durationSeconds": 0.49,
+          "requestsPerSecond": 179.427,
+          "p50Ms": 36.938,
+          "p95Ms": 77.088,
+          "p99Ms": 133.274,
+          "balancesVerified": true,
+          "idempotencyVerified": true
+        }
+      ]
+    },
+    "compose_invariants": "projection_drift=0 and unbalanced_postings=0 for both ledgers",
+    "kafka_persistence_partitions": 12,
+    "fresh_traces_verified": [
+      "ledger-csharp",
+      "ledger-java"
+    ],
+    "image_security": {
+      "trivy-audit-csharp.json": {
+        "image_id": "sha256:c7c31875f4152453c910f0f8520dae2dcd1cc80f9abe3d7bc3dd3a587567f57c",
+        "high_critical": 0
+      },
+      "trivy-csharp.json": {
+        "image_id": "sha256:bd79cd406da8bda417e031a54ef3bb1672a15b857f5c20f1aad06816cd8234b5",
+        "high_critical": 0
+      },
+      "trivy-java.json": {
+        "image_id": "sha256:d5e424e4622bab0580ba730b0eae0b9a14c3876037920ec5ddd9483ba733ee3d",
+        "high_critical": 0
+      }
+    }
   }
 }

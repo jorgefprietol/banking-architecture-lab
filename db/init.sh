@@ -22,6 +22,9 @@ SQL
 done
 for database in audit_csharp audit_java; do
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$database" -f /lab/audit.sql
+  for migration in /lab/audit-migrations/*.sql; do
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$database" -f "$migration"
+  done
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$database" -v app_role="$database" <<'SQL'
 GRANT USAGE ON SCHEMA public TO :"app_role";
 GRANT SELECT, INSERT ON inbox TO :"app_role";

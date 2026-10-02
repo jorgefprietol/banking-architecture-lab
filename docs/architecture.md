@@ -18,6 +18,10 @@ flowchart LR
     Outbox --> Kafka[Kafka]
     Kafka --> Audit[Servicio Audit]
     Audit --> AuditDB[(PostgreSQL audit)]
+    AuditDB --> RejectionRelay[Relay de rechazos]
+    RejectionRelay --> DLQ[Kafka DLQ]
+    PG --> AgeMonitor[Monitor de antigüedad]
+    AgeMonitor --> Operations[API admin / logs]
 ```
 
 ## Decisiones
@@ -32,6 +36,9 @@ flowchart LR
 8. La comparación de tres capas se conserva en conciliación: separar responsabilidades es suficiente para un batch pequeño. No se fuerza DDD a un problema de transformación.
 9. La apertura REST usa una transacción local y un proveedor de elegibilidad sintético. La saga compensatoria se estudia por separado en OpenAccount/Onboarding y sus pruebas; no se atribuyen garantías distribuidas a la apertura local. El prefijo verified: del laboratorio nunca debe utilizarse como verificación real de identidad.
 10. Restricciones diferidas comprueban los dos apuntes exactos de una transferencia al commit. También protegen contra insertar un tercer apunte después de confirmar el movimiento. El rol de ejecución solo puede añadir eventos, no alterarlos ni borrarlos.
+11. Audit valida forma, versión, identidades y dinero sin coerción. Un rechazo queda durable por posición de origen antes de confirmar el offset. Su entrega a DLQ admite repeticiones con el mismo failureId. El inbox conserva la primera evidencia y rechaza reutilizar sus identidades con otro contenido.
+12. El estado del outbox se consulta mediante un puerto de aplicación. Su monitor puede observar retrasos aunque el relay espere a Kafka; solo los administradores consultan la operación. El umbral no modifica la atomicidad de una transferencia.
+13. La publicación conserva el artefacto probado: IDs de contenedores, escaneo e imágenes deben coincidir antes de exportar. Release valida el paquete de la misma ejecución y compara IDs después de descargar lo publicado por digest. Las attestations enlazan procedencia y SBOM sin reconstruir código.
 
 ## Evolución
 

@@ -10,6 +10,7 @@ def obj(properties):
     return {"type": "object", "additionalProperties": False, "required": list(properties), "properties": properties}
 def ref(name): return {"$ref": "#/components/schemas/" + name}
 schemas = {
+    "OutboxStatus": obj({"pending": {"type": "integer", "minimum": 0}, "oldestAgeSeconds": {"type": "integer", "minimum": 0}, "thresholdSeconds": {"type": "integer", "minimum": 1, "maximum": 86400}, "alert": {"type": "boolean"}}),
     "CreateAccount": obj({"id": uuid, "ownerId": {"type": "string", "minLength": 1}, "openingMinor": money, "currency": currency}),
     "Account": obj({"id": uuid, "ownerId": {"type": "string"}, "balanceMinor": money, "currency": currency, "version": {"type": "integer", "minimum": 1}}),
     "Transfer": obj({"sourceId": uuid, "destinationId": uuid, "amountMinor": {**money, "minimum": 1}, "currency": currency}),
@@ -46,6 +47,7 @@ def operation(path, method, name, request_schema, response_schema, status=200, r
     paths.setdefault(path, {})[method] = body
 
 operation("/api/accounts", "post", "openFixtureAccount", "CreateAccount", "Account", 201, "admin")
+operation("/api/operations/outbox", "get", "outboxStatus", None, "OutboxStatus", role="admin")
 operation("/api/accounts/{id}", "get", "readAccount", None, "Account")
 operation("/api/accounts/{id}/events", "get", "readHistory", None, "AccountEvent", array=True)
 operation("/api/transfers", "post", "transfer", "Transfer", "Receipt", 201, "writer", idempotency=True)

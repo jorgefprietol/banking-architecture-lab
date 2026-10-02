@@ -110,6 +110,10 @@
                     "value": "ledger-csharp"
                   },
                   {
+                    "name": "OUTBOX_MAX_AGE_SECONDS",
+                    "value": "60"
+                  },
+                  {
                     "name": "DB_CONNECTION",
                     "valueFrom": {
                       "secretKeyRef": {
@@ -224,6 +228,10 @@
                   {
                     "name": "KAFKA_BOOTSTRAP",
                     "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_DLQ_TOPIC",
+                    "value": "transfers.csharp.dlq.v1"
                   },
                   {
                     "name": "KAFKA_GROUP",
@@ -410,6 +418,10 @@
                     "value": "ledger-java"
                   },
                   {
+                    "name": "OUTBOX_MAX_AGE_SECONDS",
+                    "value": "60"
+                  },
+                  {
                     "name": "DB_PASSWORD",
                     "valueFrom": {
                       "secretKeyRef": {
@@ -524,6 +536,10 @@
                   {
                     "name": "KAFKA_BOOTSTRAP",
                     "value": "host.docker.internal:19094"
+                  },
+                  {
+                    "name": "KAFKA_DLQ_TOPIC",
+                    "value": "transfers.java.dlq.v1"
                   },
                   {
                     "name": "KAFKA_GROUP",

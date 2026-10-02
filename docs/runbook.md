@@ -30,7 +30,7 @@ setup.py guarda contraseñas aleatorias en .env y genera un realm sintético en 
 - Broker caído: ledger sigue confirmando transacciones y acumula outbox; revisar SELECT count(*) FROM outbox WHERE published_at IS NULL. Al volver Kafka, el relay entrega pendientes.
 - Caída después de publicar: puede repetirse el evento; la clave primaria del inbox evita repetir el efecto. Confirmar offsets después de persistir.
 - Error de base de datos: rollback revierte saldos, recibo, eventos y outbox. Revisar logs con trace ID; ningún token ni contraseña debe registrarse.
-- Contrato desconocido: audit falla y no confirma el offset. Identificar la versión, desplegar un consumidor compatible y reiniciar; no saltar offsets automáticamente.
+- Evento inválido o contrato desconocido: audit guarda el mensaje original y su posición en dead_letters antes de confirmar el offset. Un relay independiente entrega el rechazo a transfers.csharp.dlq.v1 o transfers.java.dlq.v1. Revisar error_code y la versión antes de reprocesar un mensaje corregido. La cuarentena preserva datos sintéticos; un entorno real debe definir acceso y retención para mensajes sensibles.
 - Proyección corrupta: reconstruir desde eventos a una tabla nueva, comparar saldos y versiones y cambiar la lectura después de validar. Conservar una copia verificable.
 
     docker compose ps
@@ -40,7 +40,7 @@ setup.py guarda contraseñas aleatorias en .env y genera un realm sintético en 
 
 Los volúmenes se conservan al detener el laboratorio. La migración v1 solo se aplica al inicializar un volumen nuevo; modificaciones posteriores requieren migraciones nuevas. No ejecutar limpiezas globales de Docker ni borrar volúmenes de otros proyectos.
 
-Kafka usa explícitamente el directorio persistente /tmp/kraft-combined-logs. La comprobación de persistencia recrea únicamente este broker y verifica que los IDs de sus temas y los offsets de las seis particiones sobreviven. La prueba de backup restaura cada base en una base temporal nueva y elimina únicamente los recursos que ella misma creó.
+Kafka usa explícitamente el directorio persistente /tmp/kraft-combined-logs. La comprobación de persistencia recrea únicamente este broker y verifica los IDs y offsets de las doce particiones de aplicación, incluidas las DLQ. La prueba de backup restaura cada base en una base temporal nueva y elimina únicamente los recursos que ella misma creó.
 
 ## Kubernetes local
 
@@ -69,7 +69,37 @@ Después de verificar Kubernetes se pueden escalar estas cuatro aplicaciones a c
 
 CI corre con cada push y PR. Las acciones se fijan por SHA; Dependabot propone actualizaciones. Las pruebas generan cobertura y artefactos de resultados. security_scan.py falla si Trivy encuentra vulnerabilidades HIGH o CRITICAL en las tres imágenes de aplicación.
 
-Publish verified images se ejecuta manualmente desde GitHub Actions y exige repetir CI antes de publicar en GHCR. Etiqueta por SHA de commit, SBOM y attestation verificable; no requiere guardar tokens de larga duración. Desplegar cloud requiere seleccionar una plataforma y su configuración de identidad y secretos.
+Publish verified images se ejecuta manualmente desde GitHub Actions y exige repetir CI antes de publicar en GHCR. Antes de exportar, CI compara los IDs con los cuatro contenedores probados y con los escaneos Trivy. Exporta tested-images: un archivo Docker save, manifest.json con IDs y checksums, y tres SBOM CycloneDX. Release descarga el artefacto de esa misma ejecución, valida commit y runId, carga las imágenes, etiqueta por commit y publica sin rebuild. Después las descarga por digest y compara nuevamente sus IDs. promotion-evidence conserva los resultados y las attestations de procedencia y SBOM pueden verificarse con gh attestation verify. No requiere tokens de larga duración. Véase la documentación de [actions/attest](https://github.com/actions/attest).
+
+## Cuarentena y entrega a DLQ
+
+dead_letters tiene una clave única por tema, partición y offset. Los roles de auditoría solo pueden insertar, consultar y marcar published_at; no pueden modificar la evidencia ni borrarla. Un fallo de PostgreSQL impide confirmar el offset de origen. Si Kafka falla después de guardar el rechazo, este sigue pendiente y se entrega al recuperarse el broker.
+
+La entrega a DLQ puede repetirse si hay una caída entre publicar y marcar published_at. failureId se mantiene estable y permite deduplicar el rechazo. Los reintentos idénticos de eventos válidos no duplican inbox; reutilizar eventId o transferId con otro contenido produce event_identity_conflict. No se reemplaza la evidencia original.
+
+    python scripts/migrate.py
+    python scripts/recovery_test.py
+
+Para observar pendientes, consultar SELECT id,error_code,source_topic,source_partition,source_offset FROM dead_letters WHERE published_at IS NULL en la base audit correspondiente. La recuperación de un evento de otra versión requiere un consumidor compatible y revisión de su identidad y efecto; no se saltan offsets manualmente.
+
+## Alertas y carga
+
+GET /api/operations/outbox exige el rol admin y devuelve pending, oldestAgeSeconds, thresholdSeconds y alert. OUTBOX_MAX_AGE_SECONDS vale 60 por defecto y admite 1..86400. Con pendientes cuya antigüedad alcanza el umbral, el monitor emite outbox_stale; al salir de esa condición emite outbox_recovered. La consulta y el monitor funcionan independientemente del relay cuando Kafka está caído.
+
+    python scripts/load_test.py --seed 42 --iterations 200 --pairs 4 --concurrency 8
+
+Cada décima operación se reintenta con la misma clave. La semilla fija la distribución de cuentas, montos y orden; un UUID de ejecución nuevo evita colisiones con pruebas previas. workloadSha256 identifica la carga, mientras que los datos de negocio cambian de identidad en cada ejecución. La prueba falla ante respuestas incorrectas, recibos cambiados o saldos distintos a los calculados. artifacts/load conserva p50/p95/p99 y solicitudes por segundo. --max-p95-ms permite imponer un presupuesto explícito en un equipo controlado; las mediciones locales de un host compartido no describen capacidad de producción.
+
+## Verificación con procesos nativos
+
+Si compilar contenedores y ejecutar otros proyectos a la vez supera los recursos del equipo, se pueden probar las aplicaciones compiladas contra la misma infraestructura local. Requiere .NET 10, Java 21+ y Maven. Detener primero las cuatro aplicaciones de Compose para liberar los puertos y no duplicar consumidores; conservar sus volúmenes.
+
+    dotnet build Banking.sln -c Release -m:1
+    mvn -B -ntp -f java/pom.xml verify
+    docker compose stop ledger-csharp audit-csharp ledger-java audit-java
+    python scripts/native_verify.py --dotnet /ruta/dotnet --java /ruta/java
+
+El script arranca la infraestructura, aplica migraciones, inicia cuatro procesos propios y ejecuta aceptación, recuperación, carga, invariantes y restauración de backups. Guarda logs en artifacts/native y detiene únicamente sus procesos al terminar. Esta modalidad prueba binarios nativos; CI prueba los contenedores y el agente de instrumentación. Después se puede volver a docker compose up -d.
 
 ## Límites
 

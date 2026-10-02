@@ -25,28 +25,40 @@ def request(base, method, path, token=None, body=None, key=None):
     if token: headers["Authorization"] = "Bearer " + token
     if key: headers["Idempotency-Key"] = key
     data = None if body is None else json.dumps(body).encode()
-    start = time.monotonic()
+    start = time.perf_counter()
     try:
         with urllib.request.urlopen(urllib.request.Request(base + path, data=data, headers=headers, method=method), timeout=30) as response:
             raw = response.read()
             content = json.loads(raw) if raw else None
             validate_response(method, path, response.status, content)
-            return response.status, content, time.monotonic() - start
+            return response.status, content, time.perf_counter() - start
     except urllib.error.HTTPError as error:
         raw = error.read()
         try: content = json.loads(raw)
         except json.JSONDecodeError: content = raw.decode()
-        return error.code, content, time.monotonic() - start
+        return error.code, content, time.perf_counter() - start
 
 def token_for(username):
     data = urllib.parse.urlencode({"grant_type": "password", "client_id": "banking-lab",
         "username": username, "password": ENV["LAB_USER_PASSWORD"]}).encode()
-    with urllib.request.urlopen("http://127.0.0.1:18180/realms/banking-lab/protocol/openid-connect/token", data, timeout=10) as response:
-        return json.load(response)["access_token"]
+    deadline = time.monotonic() + 120
+    while True:
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:18180/realms/banking-lab/protocol/openid-connect/token", data, timeout=30) as response:
+                return json.load(response)["access_token"]
+        except urllib.error.HTTPError as error:
+            if error.code < 500: raise
+        except OSError:
+            pass
+        if time.monotonic() >= deadline: raise TimeoutError("Local identity provider did not become ready")
+        time.sleep(1)
+
+def token_claims(token):
+    payload = token.split(".")[1]
+    return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
 
 def subject(token):
-    payload = token.split(".")[1]
-    return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))["sub"]
+    return token_claims(token)["sub"]
 
 def sql(database, statement, check=True):
     process = subprocess.run(
@@ -57,6 +69,10 @@ def sql(database, statement, check=True):
 
 def compose(*args):
     subprocess.run(["docker", "compose", *args], cwd=ROOT, check=True, capture_output=True)
+
+def broker(action):
+    if action not in ("stop", "start"): raise ValueError("Invalid broker operation")
+    subprocess.run(["docker", action, "banking-lab-kafka-1"], cwd=ROOT, check=True, capture_output=True)
 
 def wait_for(predicate, timeout=60):
     deadline = time.monotonic() + timeout
@@ -74,6 +90,12 @@ class Acceptance(unittest.TestCase):
             wait_for(lambda: request(base, "GET", "/health/ready")[0] == 200, timeout=600)
         wait_for(lambda: urllib.request.urlopen("http://127.0.0.1:18180/realms/banking-lab/.well-known/openid-configuration", timeout=3).status == 200)
         cls.alice = token_for("alice"); cls.bob = token_for("bob"); cls.guest = token_for("guest")
+
+    def setUp(self):
+        # Long local runs keep short-lived tokens; rejected-token tests still send their explicit invalid values.
+        for username in ("alice", "bob", "guest"):
+            if token_claims(getattr(type(self), username))["exp"] <= time.time()+60:
+                setattr(type(self), username, token_for(username))
 
     def accounts(self, base, amount=1000, owner=None, destination_amount=0, destination_currency="USD"):
         ids = [str(uuid.uuid4()), str(uuid.uuid4())]
@@ -221,7 +243,7 @@ class Acceptance(unittest.TestCase):
                 time.sleep(2); self.assertEqual(1, count())
 
     def test_13_broker_outage_keeps_transfer_durable(self):
-        compose("stop", "kafka"); transfers = []
+        broker("stop"); transfers = []
         try:
             for name, base in TARGETS:
                 ids = self.accounts(base); result = self.transfer(base, ids)
@@ -230,7 +252,7 @@ class Acceptance(unittest.TestCase):
                 self.assertEqual("1", sql("ledger_" + name,
                     f"SELECT count(*) FROM outbox WHERE payload->>'transferId'='{result[1]['id']}' AND published_at IS NULL").stdout.strip())
         finally:
-            compose("start", "kafka")
+            broker("start")
         for name, transfer_id in transfers:
             wait_for(lambda: sql("audit_" + name, f"SELECT count(*) FROM inbox WHERE transfer_id='{transfer_id}'").stdout.strip() == "1", timeout=180)
 

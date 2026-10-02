@@ -45,8 +45,20 @@ Cada uno de los 20 escenarios recorre ambas implementaciones. Las 40 solicitudes
 
 Las pruebas unitarias producen cobertura con Coverlet y JaCoCo; la aceptación valida infraestructura real por separado. El escaneo cubre las imágenes ledger-csharp, audit-csharp y java y la base de vulnerabilidades disponible durante la ejecución. La apertura HTTP es una transacción local con identidad sintética; la compensación de saga se verifica en pruebas del dominio.
 
-CI publica resultados unitarios, cobertura, resumen de aceptación e informes de vulnerabilidades en los artefactos de GitHub Actions. Las acciones y dependencias están fijadas; la publicación manual verifica el commit antes de producir imágenes, SBOM y attestations. Los enlaces de ejecución del repositorio permiten consultar el estado actual.
+CI publica resultados unitarios, cobertura, aceptación, recuperación, carga e informes de vulnerabilidades en los artefactos de GitHub Actions. Las acciones están fijadas por SHA. La publicación manual promueve las imágenes probadas de la misma ejecución, conserva sus identidades y añade attestations de procedencia y SBOM. Los enlaces de ejecución permiten consultar el estado actual.
 
 ## Verificación después de actualizar dependencias
 
 Se incorporaron las actualizaciones integradas de xunit.runner.visualstudio 4.0.0 y coverlet.collector 10.1.0. La suite local con cobertura volvió a pasar sus 33 pruebas. Maven 3 con JDK 25 pasó las 32 pruebas de Java; la aceptación de las imágenes reconstruidas pasó los 20 escenarios en 97.314 segundos. Las dos comprobaciones de invariantes y las trazas nuevas volvieron a pasar; el nuevo escaneo de las tres imágenes registró cero HIGH/CRITICAL. La política de compilación preserva JDK 25 LTS ante propuestas de imágenes con otras líneas.
+
+## Recuperación y entrega de imágenes
+
+La ampliación añade cuarentena durable y DLQ, alerta por antigüedad del outbox, carga con semilla y promoción del paquete probado. Se verificó primero con binarios nativos en Windows (.NET 10 y Java 21) contra PostgreSQL, Kafka y Keycloak locales. C# pasó 58 pruebas y Java 41; seis comprobaciones de herramientas verificaron alteraciones del paquete, commit/ejecución incorrectos, rutas inválidas, imágenes incompletas, reproducibilidad y percentiles.
+
+Los 20 escenarios de aceptación pasaron en 84.570 segundos. Los dos escenarios nuevos pasaron en 139.682 segundos y recorrieron ambas versiones: ocho rechazos por lenguaje, preservación del mensaje, continuidad de la partición, conflicto de identidad, evidencia inmutable, repetición de entrega con el mismo failureId y alerta/recuperación del outbox. Las cuatro restauraciones incluyeron la cuarentena y volvieron a coincidir; las proyecciones y apuntes no registraron diferencias.
+
+La carga usó semilla 42, cuatro parejas y ocho clientes: 80 transferencias únicas y ocho reintentos por versión, con saldos y recibos verificados. La huella del trabajo y los resultados quedan en verification-summary.json. Son muestras sintéticas cortas en un host compartido; no estiman capacidad de producción ni comparan los lenguajes.
+
+La primera inicialización sufrió una interrupción de infraestructura y otra ejecución agotó el tiempo de arranque de Keycloak. La verificación final usa control del contenedor exacto de Kafka y reintentos limitados del cliente de identidad; mantiene el rechazo de credenciales inválidas y tokens cortos. Los procesos nativos se cerraron al terminar; las bases y sus volúmenes se conservaron.
+
+Las imágenes reconstruidas de Docker (.NET 10 y Java 25) también pasaron los 20 escenarios en 92.753 segundos y los dos nuevos en 112.744 segundos. La misma carga registró p95 de 55.493 ms y 77.088 ms, respectivamente, usando reloj de alta resolución. Las doce particiones, incluidas las DLQ, conservaron IDs y offsets después de recrear el broker. Las invariantes volvieron a pasar y las dos trazas nuevas llegaron a Jaeger. Trivy registró cero HIGH/CRITICAL en las tres imágenes nuevas, sin exclusiones.
