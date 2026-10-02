@@ -46,3 +46,7 @@ Cada uno de los 20 escenarios recorre ambas implementaciones. Las 40 solicitudes
 Las pruebas unitarias producen cobertura con Coverlet y JaCoCo; la aceptación valida infraestructura real por separado. El escaneo cubre las imágenes ledger-csharp, audit-csharp y java y la base de vulnerabilidades disponible durante la ejecución. La apertura HTTP es una transacción local con identidad sintética; la compensación de saga se verifica en pruebas del dominio.
 
 CI publica resultados unitarios, cobertura, resumen de aceptación e informes de vulnerabilidades en los artefactos de GitHub Actions. Las acciones y dependencias están fijadas; la publicación manual verifica el commit antes de producir imágenes, SBOM y attestations. Los enlaces de ejecución del repositorio permiten consultar el estado actual.
+
+## Verificación después de actualizar dependencias
+
+Se incorporaron las actualizaciones integradas de xunit.runner.visualstudio 4.0.0 y coverlet.collector 10.1.0. La suite local con cobertura volvió a pasar sus 33 pruebas. Maven 3 con JDK 25 pasó las 32 pruebas de Java; la aceptación de las imágenes reconstruidas pasó los 20 escenarios en 97.314 segundos. Las dos comprobaciones de invariantes y las trazas nuevas volvieron a pasar; el nuevo escaneo de las tres imágenes registró cero HIGH/CRITICAL. La política de compilación preserva JDK 25 LTS ante propuestas de imágenes con otras líneas.

@@ -100,5 +100,55 @@
       "ledger-csharp",
       "ledger-java"
     ]
+  },
+  "dependency_reverification": {
+    "verified_at_utc": "2026-10-02T18:13:21.312693+00:00",
+    "xunit_runner": "4.0.0",
+    "coverlet_collector": "10.1.0",
+    "csharp_passed": 33,
+    "java_passed": 32,
+    "compose": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "targets": {
+        "csharp": "http://127.0.0.1:19081",
+        "java": "http://127.0.0.1:19082"
+      },
+      "latency_samples": [
+        {
+          "implementation": "csharp",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 258.0,
+          "p95_ms": 641.0
+        },
+        {
+          "implementation": "java",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 367.5,
+          "p95_ms": 656.0
+        }
+      ],
+      "note": "Local contention sample, not a production capacity benchmark."
+    },
+    "image_scans": {
+      "csharp": {
+        "image_id": "sha256:dae4965638a7b6af8fa261c4fcce40a3a0a28692ba97d5eeac177108a5ba955d",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:33.288962225Z"
+      },
+      "audit-csharp": {
+        "image_id": "sha256:882a4a1bfa70dd59abb4634e791a79bf15663d8881f7271cc1c2e73f5d179254",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:35.968582128Z"
+      },
+      "java": {
+        "image_id": "sha256:84fc3740513c38f4a378901968b04a02d58452b01bedfeddde7f6e1743c0ce76",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:54.845990666Z"
+      }
+    }
   }
 }

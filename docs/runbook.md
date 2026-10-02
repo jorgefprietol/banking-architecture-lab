@@ -46,9 +46,9 @@ Kafka usa explícitamente el directorio persistente /tmp/kraft-combined-logs. La
 
 Instalar kind y kubectl. Los manifiestos conectan con la infraestructura de Compose por host.docker.internal; no necesitan credenciales cloud. Se utiliza un kubeconfig explícito para evitar cambiar el contexto de otros clústeres.
 
+    python scripts/generate_k8s.py
     kind create cluster --name banking-architecture --config k8s/kind.yaml --kubeconfig artifacts/k8s/kubeconfig
     kind load docker-image banking-ledger-csharp:local banking-audit-csharp:local banking-java:local --name banking-architecture
-    python scripts/generate_k8s.py
     kubectl --kubeconfig artifacts/k8s/kubeconfig apply -f k8s/local.json
     kubectl --kubeconfig artifacts/k8s/kubeconfig apply -f artifacts/k8s/secret.json
     kubectl --kubeconfig artifacts/k8s/kubeconfig -n banking-lab rollout status deployment/ledger-csharp --timeout=600s
@@ -62,6 +62,8 @@ Abrir dos terminales para los port-forward:
 Ejecutar la misma aceptación indicando BASE_CSHARP=http://127.0.0.1:19981 y BASE_JAVA=http://127.0.0.1:19982 como variables de entorno. Detener previamente las cuatro aplicaciones de Compose, conservando la infraestructura, facilita observar consumidores sin otras réplicas.
 
 El namespace aplica Pod Security restricted; los contenedores no usan root, eliminan capacidades, no montan tokens de Kubernetes y tienen límites de recursos y probes de API. La compatibilidad failCgroupV1:false de kind se limita a Docker Desktop local cuando usa cgroup v1. Un entorno nuevo debe usar cgroup v2 según las [recomendaciones de Kubernetes](https://v1-35.docs.kubernetes.io/docs/concepts/architecture/cgroups/).
+
+Después de verificar Kubernetes se pueden escalar estas cuatro aplicaciones a cero y volver a iniciar las de Compose para usar los puertos 19081 y 19082. El kubeconfig, el namespace y los manifiestos permiten reactivar el despliegue local sin recrear la infraestructura.
 
 ## CI y publicación
 
