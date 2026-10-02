@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:banking-lab:transfer-completed:v1",
+  "title": "TransferCompleted v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "type", "schemaVersion", "transferId", "sourceId", "destinationId", "amountMinor", "currency"],
+  "properties": {
+    "eventId": {"type": "string", "format": "uuid"},
+    "type": {"const": "TransferCompleted"},
+    "schemaVersion": {"const": 1},
+    "transferId": {"type": "string", "format": "uuid"},
+    "sourceId": {"type": "string", "format": "uuid"},
+    "destinationId": {"type": "string", "format": "uuid"},
+    "amountMinor": {"type": "integer", "minimum": 1, "maximum": 9000000000000},
+    "currency": {"enum": ["USD", "EUR"]}
+  }
+}

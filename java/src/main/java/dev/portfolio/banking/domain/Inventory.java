@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 public final class Inventory {
+    public record ReservationState(UUID id, int quantity, boolean cancelled) {}
     private final HashMap<UUID, Integer> reservations = new HashMap<>();
     private final HashSet<UUID> cancelled = new HashSet<>();
     private int available;
@@ -15,6 +16,17 @@ public final class Inventory {
     }
     public int available() { return available; }
     public int version() { return version; }
+    public static Inventory restore(int available, int version, Iterable<ReservationState> history) {
+        if (version < 0) throw new DomainException("invalid_stock");
+        var inventory = new Inventory(available);
+        inventory.version = version;
+        for (var item : history) {
+            if (item.id() == null || item.id().equals(new UUID(0, 0)) || item.quantity() <= 0 || inventory.reservations.putIfAbsent(item.id(), item.quantity()) != null)
+                throw new DomainException("invalid_reservation");
+            if (item.cancelled()) inventory.cancelled.add(item.id());
+        }
+        return inventory;
+    }
     public void reserve(UUID id, int quantity, int expectedVersion) {
         if (id == null || id.equals(new UUID(0, 0)) || quantity <= 0) throw new DomainException("invalid_reservation");
         if (reservations.containsKey(id)) {

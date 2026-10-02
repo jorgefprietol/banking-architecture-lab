@@ -2,6 +2,7 @@ namespace Banking.Domain;
 
 public sealed class Inventory
 {
+    public sealed record ReservationState(Guid Id, int Quantity, bool Cancelled);
     private readonly Dictionary<Guid, int> reservations = [];
     private readonly HashSet<Guid> cancelled = [];
     public int Available { get; private set; }
@@ -10,6 +11,18 @@ public sealed class Inventory
     {
         if (stock < 0) throw new DomainException("invalid_stock");
         Available = stock;
+    }
+    public static Inventory Restore(int available, int version, IEnumerable<ReservationState> history)
+    {
+        if (version < 0) throw new DomainException("invalid_stock");
+        var inventory = new Inventory(available) { Version = version };
+        foreach (var item in history)
+        {
+            if (item.Id == Guid.Empty || item.Quantity <= 0 || !inventory.reservations.TryAdd(item.Id, item.Quantity))
+                throw new DomainException("invalid_reservation");
+            if (item.Cancelled) inventory.cancelled.Add(item.Id);
+        }
+        return inventory;
     }
     public void Reserve(Guid id, int quantity, int expectedVersion)
     {

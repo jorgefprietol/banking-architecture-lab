@@ -1,0 +1,1067 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Banking Architecture Lab",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:19081",
+      "description": "C#"
+    },
+    {
+      "url": "http://localhost:19082",
+      "description": "Java"
+    }
+  ],
+  "paths": {
+    "/api/accounts": {
+      "post": {
+        "operationId": "openFixtureAccount",
+        "description": "Required realm role: admin",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccount"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}": {
+      "get": {
+        "operationId": "readAccount",
+        "description": "Required realm role: reader",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}/events": {
+      "get": {
+        "operationId": "readHistory",
+        "description": "Required realm role: reader",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountEvent"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        }
+      }
+    },
+    "/api/transfers": {
+      "post": {
+        "operationId": "transfer",
+        "description": "Required realm role: writer",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique UUID per actor and operation; exact retries return the original result."
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Transfer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/risk/evaluate": {
+      "post": {
+        "operationId": "evaluateRisk",
+        "description": "Required realm role: writer",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RiskFinding"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskSignal"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation": {
+      "post": {
+        "operationId": "reconcile",
+        "description": "Required realm role: admin",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Discrepancy"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reconciliation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "post": {
+        "operationId": "createProduct",
+        "description": "Required realm role: admin",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "operationId": "readProduct",
+        "description": "Required realm role: reader",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        }
+      }
+    },
+    "/api/products/{id}/reservations": {
+      "post": {
+        "operationId": "reserve",
+        "description": "Required realm role: writer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reservation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}/reservations/{reservationId}": {
+      "delete": {
+        "operationId": "cancelReservation",
+        "description": "Required realm role: writer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "expectedVersion",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        }
+      }
+    },
+    "/api/onboarding": {
+      "post": {
+        "operationId": "onboard",
+        "description": "Required realm role: writer",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Unique UUID per actor and operation; exact retries return the original result."
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON contract"
+          },
+          "401": {
+            "description": "Invalid or absent token"
+          },
+          "403": {
+            "description": "Role or ownership denied"
+          },
+          "404": {
+            "description": "Resource absent"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Business rule violation"
+          },
+          "500": {
+            "description": "Infrastructure failure"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Onboarding"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateAccount": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ownerId",
+          "openingMinor",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "openingMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9000000000000
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ownerId",
+          "balanceMinor",
+          "currency",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "balanceMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9000000000000
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "Transfer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceId",
+          "destinationId",
+          "amountMinor",
+          "currency"
+        ],
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9000000000000
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          }
+        }
+      },
+      "Receipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "sourceId",
+          "destinationId",
+          "amountMinor",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9000000000000
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          }
+        }
+      },
+      "AccountEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accountId",
+          "version",
+          "delta",
+          "currency"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "delta": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          }
+        }
+      },
+      "RiskSignal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amountMinor",
+          "recentTransfers",
+          "sanctionsMatch"
+        ],
+        "properties": {
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9000000000000
+          },
+          "recentTransfers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sanctionsMatch": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RiskFinding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rule",
+          "blocked",
+          "reason"
+        ],
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "blocked": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SettlementRow": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference",
+          "minor"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "minor": {
+            "type": "integer"
+          }
+        }
+      },
+      "Reconciliation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "internalRows",
+          "providerRows"
+        ],
+        "properties": {
+          "internalRows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementRow"
+            }
+          },
+          "providerRows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementRow"
+            }
+          }
+        }
+      },
+      "Discrepancy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference",
+          "kind"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "stock"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "available",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "available": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reservationId",
+          "quantity",
+          "expectedVersion"
+        ],
+        "properties": {
+          "reservationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Onboarding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "applicantReference",
+          "currency"
+        ],
+        "properties": {
+          "applicantReference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR"
+            ]
+          }
+        }
+      },
+      "OnboardingResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "state",
+          "accountId"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "Opened",
+              "Rejected"
+            ]
+          },
+          "accountId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
