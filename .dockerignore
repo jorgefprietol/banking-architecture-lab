@@ -1,0 +1,7 @@
+.git
+.env
+artifacts
+**/bin
+**/obj
+**/target
+**/__pycache__

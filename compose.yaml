@@ -1,0 +1,173 @@
+name: banking-lab
+services:
+  postgres:
+    image: postgres:18.3-alpine
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Run scripts/setup.py}
+    ports: ["127.0.0.1:15433:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./db/init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+      - ./db:/lab:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  kafka-volume-init:
+    image: apache/kafka:4.1.1
+    user: "0"
+    volumes: [kafka-data:/data]
+    entrypoint: ["/bin/sh", "-c", "chown 1000:1000 /data"]
+  kafka:
+    image: apache/kafka:4.1.1
+    mem_limit: 768m
+    ports: ["127.0.0.1:19092:9092", "127.0.0.1:19094:9094"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_HEAP_OPTS: -Xms128m -Xmx384m
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:29092,EXTERNAL://:9092,HOST://:9094,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:19092,HOST://host.docker.internal:19094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes: [kafka-data:/tmp/kraft-combined-logs]
+    depends_on:
+      kafka-volume-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list"]
+      interval: 30s
+      timeout: 60s
+      retries: 30
+  kafka-init:
+    image: apache/kafka:4.1.1
+    depends_on:
+      kafka: {condition: service_healthy}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic transfers.csharp.v1 --partitions 3 --replication-factor 1 && /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic transfers.java.v1 --partitions 3 --replication-factor 1
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    mem_limit: 768m
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: lab-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+      KC_HOSTNAME: http://localhost:18180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx512m
+    ports: ["127.0.0.1:18180:8080"]
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./artifacts/keycloak:/opt/keycloak/data/import:ro
+  ledger-csharp:
+    mem_limit: 512m
+    build: {context: ., dockerfile: csharp/Dockerfile, target: api}
+    image: banking-ledger-csharp:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DB_CONNECTION: Host=postgres;Database=ledger_csharp;Username=ledger_csharp;Password=${DB_PASSWORD}
+      OIDC_ISSUER: http://localhost:18180/realms/banking-lab
+      OIDC_METADATA: http://keycloak:8080/realms/banking-lab/.well-known/openid-configuration
+      KAFKA_BOOTSTRAP: kafka:29092
+      KAFKA_TOPIC: transfers.csharp.v1
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+    ports: ["127.0.0.1:19081:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      kafka-init: {condition: service_completed_successfully}
+      keycloak: {condition: service_started}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  audit-csharp:
+    mem_limit: 256m
+    build: {context: ., dockerfile: csharp/Dockerfile, target: audit}
+    image: banking-audit-csharp:local
+    environment:
+      DB_CONNECTION: Host=postgres;Database=audit_csharp;Username=audit_csharp;Password=${DB_PASSWORD}
+      KAFKA_BOOTSTRAP: kafka:29092
+      KAFKA_TOPIC: transfers.csharp.v1
+      KAFKA_GROUP: audit-csharp-v1
+    depends_on:
+      postgres: {condition: service_healthy}
+      kafka-init: {condition: service_completed_successfully}
+    restart: on-failure:3
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  ledger-java:
+    mem_limit: 768m
+    build: {context: ., dockerfile: java/Dockerfile}
+    image: banking-java:local
+    environment:
+      LEDGER_JDBC_URL: jdbc:postgresql://postgres:5432/ledger_java
+      DB_USER: ledger_java
+      DB_PASSWORD: ${DB_PASSWORD}
+      OIDC_ISSUER: http://localhost:18180/realms/banking-lab
+      OIDC_JWKS: http://keycloak:8080/realms/banking-lab/protocol/openid-connect/certs
+      KAFKA_BOOTSTRAP: kafka:29092
+      KAFKA_TOPIC: transfers.java.v1
+      OTEL_SERVICE_NAME: ledger-java
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED: "false"
+      OTEL_INSTRUMENTATION_TOMCAT_ENABLED: "true"
+      OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED: "true"
+      OTEL_INSTRUMENTATION_JDBC_ENABLED: "true"
+      OTEL_INSTRUMENTATION_KAFKA_ENABLED: "true"
+    ports: ["127.0.0.1:19082:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      kafka-init: {condition: service_completed_successfully}
+      keycloak: {condition: service_started}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  audit-java:
+    mem_limit: 512m
+    image: banking-java:local
+    environment:
+      BANK_MODE: audit
+      AUDIT_JDBC_URL: jdbc:postgresql://postgres:5432/audit_java
+      DB_USER: audit_java
+      DB_PASSWORD: ${DB_PASSWORD}
+      KAFKA_BOOTSTRAP: kafka:29092
+      KAFKA_TOPIC: transfers.java.v1
+      KAFKA_GROUP: audit-java-v1
+      OTEL_SERVICE_NAME: audit-java
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED: "false"
+      OTEL_INSTRUMENTATION_KAFKA_ENABLED: "true"
+      OTEL_INSTRUMENTATION_JDBC_ENABLED: "true"
+    depends_on:
+      ledger-java: {condition: service_started}
+    restart: on-failure:3
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  jaeger:
+    image: jaegertracing/jaeger:2.20.0
+    mem_limit: 256m
+    ports: ["127.0.0.1:19686:16686", "127.0.0.1:19417:4317"]
+volumes:
+  postgres-data:
+  kafka-data:
+  keycloak-data:
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.203.73.0/24

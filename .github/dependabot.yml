@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /csharp/Banking.Api
+    schedule: {interval: weekly}
+  - package-ecosystem: nuget
+    directory: /csharp/Banking.Infrastructure
+    schedule: {interval: weekly}
+  - package-ecosystem: nuget
+    directory: /csharp/Banking.Tests
+    schedule: {interval: weekly}
+  - package-ecosystem: maven
+    directory: /java
+    schedule: {interval: weekly}
+  - package-ecosystem: docker
+    directory: /java
+    schedule: {interval: weekly}
+  - package-ecosystem: docker
+    directory: /csharp
+    schedule: {interval: weekly}
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}
