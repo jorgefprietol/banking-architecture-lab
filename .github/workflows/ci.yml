@@ -29,6 +29,7 @@ jobs:
       - run: dotnet test Banking.sln --no-restore -c Release --collect:"XPlat Code Coverage" --results-directory artifacts/unit/csharp
       - run: mvn -B -ntp -f java/pom.xml verify
       - run: python3 scripts/check_architecture.py
+      - run: python3 scripts/tooling_test.py
       - run: python3 scripts/generate_openapi.py && git diff --exit-code -- contracts/openapi.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -41,24 +42,35 @@ jobs:
   integration:
     needs: unit
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 scripts/setup.py
       - run: docker compose up --build -d
       - run: python3 scripts/migrate.py
       - run: python3 scripts/integration_test.py
+      - run: python3 scripts/recovery_test.py
+      - run: python3 scripts/load_test.py --seed 42 --iterations 80 --pairs 4 --concurrency 8
       - run: python3 scripts/broker_persistence_test.py
       - run: python3 scripts/check_ledger_invariants.py
       - run: python3 scripts/verify_telemetry.py
       - run: python3 scripts/backup_restore_test.py
       - run: python3 scripts/security_scan.py
+      - run: python3 scripts/image_bundle.py export
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tested-images
+          path: artifacts/images/
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: integration-summary
           path: |
-            artifacts/integration/summary.json
+            artifacts/integration/*.json
+            artifacts/load/**/report.json
             artifacts/security/*.json
       - name: Diagnostics
         if: failure()

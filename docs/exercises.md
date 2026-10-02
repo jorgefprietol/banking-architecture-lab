@@ -10,7 +10,9 @@ Cada caso debe ejecutarse en ambas versiones y pasar los mismos escenarios. El c
 | Microkernel | Plugins independientes; todos devuelven razones; decisión determinista; no permitir regla con identificador repetido | Añadir regla de velocidad con ventana temporal |
 | Conciliación | Clasifica faltantes, discrepancias y duplicados sin silenciarlos; importa CSV controlado por un puerto | Añadir totales de control y cierre de archivo del proveedor |
 | Inventory | Rechaza sobreventa; versión protege escritor concurrente; cancelación devuelve stock una sola vez | Añadir expiración con reloj inyectado |
-| Auditoría | Outbox se recupera tras caída; duplicado no duplica efecto; offset se confirma después del commit | Simular caída entre publicación y marca de entrega |
+| Auditoría | Outbox se recupera tras caída; duplicado no duplica efecto; evento inválido se conserva y no bloquea la partición; offset se confirma después del commit | Reprocesar una nueva versión sin cambiar la evidencia original |
+| Operación | Antigüedad activa alerta y recuperación; carga con semilla verifica saldos y reintentos | Definir SLO y presupuesto de p95 en un equipo controlado |
+| Entrega | IDs de imágenes probadas sobreviven a exportación, carga y publicación; hashes detectan alteración; SBOM firmado | Verificar las attestations antes de desplegar por digest |
 
 ## Preguntas de arquitectura
 

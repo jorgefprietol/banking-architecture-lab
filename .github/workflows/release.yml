@@ -16,39 +16,59 @@ jobs:
       packages: write
       id-token: write
       attestations: write
-    strategy:
-      matrix:
-        include:
-          - name: ledger-csharp
-            dockerfile: csharp/Dockerfile
-            target: api
-          - name: audit-csharp
-            dockerfile: csharp/Dockerfile
-            target: audit
-          - name: java
-            dockerfile: java/Dockerfile
-            target: ""
+      artifact-metadata: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: tested-images
+          path: artifacts/images
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        id: image
+      - name: Load, verify and promote the tested images without rebuilding
+        id: promote
+        run: python3 scripts/image_bundle.py promote
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          target: ${{ matrix.target }}
-          platforms: linux/amd64
-          push: true
-          tags: ghcr.io/${{ github.repository }}/${{ matrix.name }}:${{ github.sha }}
-          provenance: mode=max
-          sbom: true
-      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-name: ghcr.io/${{ github.repository }}/${{ matrix.name }}
-          subject-digest: ${{ steps.image.outputs.digest }}
+          subject-name: ghcr.io/${{ github.repository }}/ledger-csharp
+          subject-digest: ${{ steps.promote.outputs.ledger_csharp_digest }}
           push-to-registry: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/audit-csharp
+          subject-digest: ${{ steps.promote.outputs.audit_csharp_digest }}
+          push-to-registry: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/java
+          subject-digest: ${{ steps.promote.outputs.java_digest }}
+          push-to-registry: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/ledger-csharp
+          subject-digest: ${{ steps.promote.outputs.ledger_csharp_digest }}
+          sbom-path: artifacts/images/ledger-csharp.cdx.json
+          push-to-registry: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/audit-csharp
+          subject-digest: ${{ steps.promote.outputs.audit_csharp_digest }}
+          sbom-path: artifacts/images/audit-csharp.cdx.json
+          push-to-registry: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/java
+          subject-digest: ${{ steps.promote.outputs.java_digest }}
+          sbom-path: artifacts/images/java.cdx.json
+          push-to-registry: true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: promotion-evidence
+          path: |
+            artifacts/images/manifest.json
+            artifacts/images/promotion.json
+            artifacts/images/*.cdx.json
