@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/target/
+**/__pycache__/
+.env
+.tools/
+artifacts/
+*.user
+*.log
+.idea/
+.vscode/
