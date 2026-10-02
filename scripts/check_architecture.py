@@ -18,4 +18,6 @@ for language, directories in {
 schema = json.loads((root / "contracts/transfer-completed.v1.schema.json").read_text())
 assert set(schema["required"]) == set(schema["properties"])
 assert schema["additionalProperties"] is False
-print("Architecture boundaries and v1 event shape verified.")
+java_image_lines = re.findall(r"eclipse-temurin[-:]([0-9]+)", (root / "java/Dockerfile").read_text())
+assert len(java_image_lines) == 2 and set(java_image_lines) == {"25"}, "Build and runtime images must use the tested Java 25 LTS line"
+print("Architecture boundaries, v1 event shape and Java LTS image policy verified.")

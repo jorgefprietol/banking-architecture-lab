@@ -30,6 +30,8 @@ flowchart LR
 6. Monolito modular para reglas y transacciones del ledger. Audit se despliega separado porque su latencia y almacenamiento tienen requisitos distintos. No se distribuye una transferencia atómica entre servicios.
 7. Puertos sustituyen proveedores KYC y riesgo. Los adaptadores de prueba son deterministas; una integración real requiere autenticación, timeouts, retries y revisión de cumplimiento.
 8. La comparación de tres capas se conserva en conciliación: separar responsabilidades es suficiente para un batch pequeño. No se fuerza DDD a un problema de transformación.
+9. La apertura REST usa una transacción local y un proveedor de elegibilidad sintético. La saga compensatoria se estudia por separado en OpenAccount/Onboarding y sus pruebas; no se atribuyen garantías distribuidas a la apertura local. El prefijo verified: del laboratorio nunca debe utilizarse como verificación real de identidad.
+10. Restricciones diferidas comprueban los dos apuntes exactos de una transferencia al commit. También protegen contra insertar un tercer apunte después de confirmar el movimiento. El rol de ejecución solo puede añadir eventos, no alterarlos ni borrarlos.
 
 ## Evolución
 

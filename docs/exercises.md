@@ -8,7 +8,7 @@ Cada caso debe ejecutarse en ambas versiones y pasar los mismos escenarios. El c
 | Event sourcing / CQRS | Replay produce saldo correcto; versión incremental; rollback no deja eventos huérfanos | Reconstruir una proyección en otra tabla y comparar antes de sustituir |
 | Onboarding | KYC rechazado impide apertura; aprovisionamiento fallido compensa reserva; éxito es terminal | Persistir saga y simular caída entre pasos |
 | Microkernel | Plugins independientes; todos devuelven razones; decisión determinista; no permitir regla con identificador repetido | Añadir regla de velocidad con ventana temporal |
-| Conciliación | Clasifica faltantes, discrepancias y duplicados sin silenciarlos | Leer CSV de un proveedor con su capa anticorrupción |
+| Conciliación | Clasifica faltantes, discrepancias y duplicados sin silenciarlos; importa CSV controlado por un puerto | Añadir totales de control y cierre de archivo del proveedor |
 | Inventory | Rechaza sobreventa; versión protege escritor concurrente; cancelación devuelve stock una sola vez | Añadir expiración con reloj inyectado |
 | Auditoría | Outbox se recupera tras caída; duplicado no duplica efecto; offset se confirma después del commit | Simular caída entre publicación y marca de entrega |
 

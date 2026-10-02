@@ -1,0 +1,154 @@
+{
+  "verified_at_utc": "2026-10-02T17:57:59.226244+00:00",
+  "unit": {
+    "csharp": {
+      "passed": 33,
+      "failed": 0
+    },
+    "java": {
+      "passed": 32,
+      "failed": 0
+    }
+  },
+  "compose": {
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "targets": {
+      "csharp": "http://127.0.0.1:19081",
+      "java": "http://127.0.0.1:19082"
+    },
+    "latency_samples": [
+      {
+        "implementation": "csharp",
+        "requests": 40,
+        "concurrency": 12,
+        "p50_ms": 367.5,
+        "p95_ms": 1079.0
+      },
+      {
+        "implementation": "java",
+        "requests": 40,
+        "concurrency": 12,
+        "p50_ms": 188.0,
+        "p95_ms": 859.0
+      }
+    ],
+    "note": "Local contention sample, not a production capacity benchmark."
+  },
+  "kubernetes": {
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "targets": {
+      "csharp": "http://127.0.0.1:19981",
+      "java": "http://127.0.0.1:19982"
+    },
+    "latency_samples": [
+      {
+        "implementation": "csharp",
+        "requests": 40,
+        "concurrency": 12,
+        "p50_ms": 304.0,
+        "p95_ms": 1500.0
+      },
+      {
+        "implementation": "java",
+        "requests": 40,
+        "concurrency": 12,
+        "p50_ms": 710.5,
+        "p95_ms": 2531.0
+      }
+    ],
+    "note": "Local contention sample, not a production capacity benchmark."
+  },
+  "image_scans": {
+    "csharp": {
+      "image_id": "sha256:59e590c612d72e0b54956f8fa1ebb7eb01369c4f55adb7b45a7d2ba6fc8b0bf7",
+      "high_critical_findings": 0,
+      "scanned_at": "2026-10-02T17:40:15.483027333Z"
+    },
+    "audit-csharp": {
+      "image_id": "sha256:5e7cc5d0c97a3ce2f03dc3b1f0a3cbe8635ffd8302c37315f7388fc599313038",
+      "high_critical_findings": 0,
+      "scanned_at": "2026-10-02T17:41:02.31709356Z"
+    },
+    "java": {
+      "image_id": "sha256:539086390da2654ff403dd6802c88bff4d8af1ba5139259b3090e396b7c184d2",
+      "high_critical_findings": 0,
+      "scanned_at": "2026-10-02T17:42:20.833244072Z"
+    }
+  },
+  "backup_restore": {
+    "databases": [
+      "ledger_csharp",
+      "ledger_java",
+      "audit_csharp",
+      "audit_java"
+    ],
+    "passed": 4
+  },
+  "invariants": {
+    "projection_drift": 0,
+    "unbalanced_postings": 0
+  },
+  "broker_recreation": {
+    "persisted_application_partitions": 6
+  },
+  "telemetry": {
+    "new_propagated_trace_ids_verified_for": [
+      "ledger-csharp",
+      "ledger-java"
+    ]
+  },
+  "dependency_reverification": {
+    "verified_at_utc": "2026-10-02T18:13:21.312693+00:00",
+    "xunit_runner": "4.0.0",
+    "coverlet_collector": "10.1.0",
+    "csharp_passed": 33,
+    "java_passed": 32,
+    "compose": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "targets": {
+        "csharp": "http://127.0.0.1:19081",
+        "java": "http://127.0.0.1:19082"
+      },
+      "latency_samples": [
+        {
+          "implementation": "csharp",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 258.0,
+          "p95_ms": 641.0
+        },
+        {
+          "implementation": "java",
+          "requests": 40,
+          "concurrency": 12,
+          "p50_ms": 367.5,
+          "p95_ms": 656.0
+        }
+      ],
+      "note": "Local contention sample, not a production capacity benchmark."
+    },
+    "image_scans": {
+      "csharp": {
+        "image_id": "sha256:dae4965638a7b6af8fa261c4fcce40a3a0a28692ba97d5eeac177108a5ba955d",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:33.288962225Z"
+      },
+      "audit-csharp": {
+        "image_id": "sha256:882a4a1bfa70dd59abb4634e791a79bf15663d8881f7271cc1c2e73f5d179254",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:35.968582128Z"
+      },
+      "java": {
+        "image_id": "sha256:84fc3740513c38f4a378901968b04a02d58452b01bedfeddde7f6e1743c0ce76",
+        "high_critical_findings": 0,
+        "scanned_at": "2026-10-02T18:11:54.845990666Z"
+      }
+    }
+  }
+}

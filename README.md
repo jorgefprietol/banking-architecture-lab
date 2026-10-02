@@ -1,5 +1,7 @@
 # Banking Architecture Lab
 
+[![CI](https://github.com/jorgefprietol/banking-architecture-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/jorgefprietol/banking-architecture-lab/actions/workflows/ci.yml)
+
 Casos de ingeniería de software para banca digital y sistemas de reservas, con implementaciones equivalentes en C# y Java. Datos sintéticos; reglas de negocio explícitas; pruebas que verifican invariantes y fallos.
 
 ## Casos
@@ -22,6 +24,20 @@ El núcleo no depende de frameworks. ASP.NET Core y Spring Boot son adaptadores 
 
 ## Ejecución
 
-Las instrucciones verificadas, requisitos y resultados se incorporan junto a cada implementación. Consulte [docs/exercises.md](docs/exercises.md), [docs/architecture.md](docs/architecture.md) y [docs/verification.md](docs/verification.md).
+Requisitos: Docker con contenedores Linux, Compose v2 y Python 3.10+. En Windows puede usarse py en lugar de python.
+
+    python scripts/setup.py
+    docker compose up --build -d
+    python scripts/migrate.py
+    python scripts/integration_test.py
+
+Las compilaciones de contenedores ejecutan las suites unitarias. La aceptación usa PostgreSQL, Kafka y Keycloak reales y valida ambas APIs contra el mismo contrato OpenAPI. Las credenciales se generan localmente y permanecen fuera de Git.
+
+- APIs: http://localhost:19081/health/ready y http://localhost:19082/health/ready.
+- Trazas: http://localhost:19686.
+- [Ejercicios y defensa en entrevista](docs/exercises.md), [mapa completo del temario](docs/learning-guide.md) y [decisiones de arquitectura](docs/architecture.md).
+- [Operación, recuperación y Kubernetes](docs/runbook.md), [resultados observados](docs/verification.md) y [política de seguridad](SECURITY.md).
+
+El pipeline verifica pruebas, contratos, invariantes, recuperación, backups y vulnerabilidades. La publicación manual en GHCR genera imágenes identificadas por commit, SBOM y attestations de procedencia. Consulte [.github/workflows](.github/workflows).
 
 Este repositorio es un portafolio ejecutable. Las reglas de identidad y riesgo son ejemplos educativos y no certifican cumplimiento regulatorio ni sustituyen controles de una institución financiera.
