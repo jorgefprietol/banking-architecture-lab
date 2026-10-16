@@ -31,7 +31,7 @@ jobs:
       - run: python3 scripts/check_architecture.py
       - run: python3 scripts/tooling_test.py
       - run: python3 scripts/generate_openapi.py && git diff --exit-code -- contracts/openapi.json
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: unit-results
@@ -57,14 +57,14 @@ jobs:
       - run: python3 scripts/backup_restore_test.py
       - run: python3 scripts/security_scan.py
       - run: python3 scripts/image_bundle.py export
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tested-images
           path: artifacts/images/
           compression-level: 0
           retention-days: 3
           if-no-files-found: error
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: integration-summary
