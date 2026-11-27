@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="../Banking.Application/Banking.Application.csproj" />
-    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="Npgsql" Version="11.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.15.1" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
